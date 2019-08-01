@@ -3,27 +3,30 @@
 Numpy Implementation of a neural network
 """
 
+import json
 import numpy
 from typing import List
+
 
 def convert(entry):
     """
     Convert an entry to a binary representation
     """
-    return {"x": [1, 0], "o": [0, 1], "b": [0, 0], "win": 1, "loss": -1, "draw": 0}[entry.replace("\n", "")]
+    return {"x": [1, 0], "o": [0, 1], "b": [0, 0], "win": 1, "loss": -1, "draw": 0}[
+        entry.replace("\n", "")
+    ]
 
 
-def ternary_to_binary(
-        ternary: List,
-        length=67
-    ):
+def ternary_to_binary(ternary: List, length=67):
     """
     Converts a ternary list-representation of a number into the binary list-representation of that number
     """
     if isinstance(ternary, list):
-        ternary = ''.join([str(_) for _ in ternary])
-    binary = bin(sum([3 ** (len(ternary) - i - 1) * int(ternary[i]) for i in range(len(ternary))]))[2:]
-    return [int(x) for x in "0"*(length - len(binary)) + binary]
+        ternary = "".join([str(_) for _ in ternary])
+    binary = bin(sum([3 ** (len(ternary) - i - 1) * int(ternary[i]) for i in range(len(ternary))]))[
+        2:
+    ]
+    return [int(x) for x in "0" * (length - len(binary)) + binary]
 
 
 class ConnectAI:
@@ -32,8 +35,10 @@ class ConnectAI:
     Uses a sigmoid activation function
     """
 
-    def __init__(self):
+    def __init__(self, name, epochs=20):
 
+        self.name = name
+        self.epochs = epochs
         self.input_size = 84
         self.hidden_size = 10
         self.output_size = 1
@@ -71,7 +76,9 @@ class ConnectAI:
         """
         Serialize a line into 0's and 1's
         """
-        serialized_instance = self.flatten([convert(x) for x in instance.split(",")][::(-1 if reverse else 1)])
+        serialized_instance = self.flatten(
+            [convert(x) for x in instance.split(",")][:: (-1 if reverse else 1)]
+        )
         return (numpy.array([serialized_instance[:-1]]), numpy.array([serialized_instance[-1]]))
 
     def sigmoid(self, s):
@@ -99,7 +106,7 @@ class ConnectAI:
         Train
         """
         reverse = True
-        for epoch in range(20):
+        for epoch in range(self.epochs):
             reverse = not reverse
             with open(path, "r") as file:
                 for i, line in enumerate(file.readlines()):
@@ -108,8 +115,16 @@ class ConnectAI:
                     self.backward(X, y, o)
             print(f"{epoch}: {numpy.array(self.loss).mean()}")
 
+    def save_weights(self):
+        """
+        Save model weights
+        """
+        with open(f"weights/{self.name}.json", "w") as file:
+            json.dump({"w1": self.w1.tolist(), "w2": self.w2.tolist()}, file)
+
 
 if __name__ == "__main__":
 
-    connect = ConnectAI()
+    connect = ConnectAI("epoch_10", epochs=10)
     connect.train("connect-4.data")
+    connect.save_weights()
