@@ -3,9 +3,10 @@
 Numpy Implementation of a neural network
 """
 
+from typing import List
+
 import json
 import numpy
-from typing import List
 
 
 def convert(entry):
@@ -36,6 +37,9 @@ class ConnectAI:
     """
 
     def __init__(self, name, epochs=20):
+        """
+        Initialise the model
+        """
 
         self.name = name
         self.epochs = epochs
@@ -45,7 +49,6 @@ class ConnectAI:
 
         self.w1 = numpy.random.rand(self.input_size, self.hidden_size)  # 84 x 4 tensor
         self.w2 = numpy.random.rand(self.hidden_size, self.output_size)  # 4 x 1 tensor
-
         self.loss = []
 
     def forward(self, X):
@@ -77,7 +80,7 @@ class ConnectAI:
         Serialize a line into 0's and 1's
         """
         serialized_instance = self.flatten(
-            [convert(x) for x in instance.split(",")][:: (-1 if reverse else 1)]
+            [convert(x) for x in instance.split(",")][::(-1 if reverse else 1)]
         )
         return (numpy.array([serialized_instance[:-1]]), numpy.array([serialized_instance[-1]]))
 
@@ -109,7 +112,7 @@ class ConnectAI:
         for epoch in range(self.epochs):
             reverse = not reverse
             with open(path, "r") as file:
-                for i, line in enumerate(file.readlines()):
+                for line in file.readlines():
                     X, y = self.serialize(line, reverse=reverse)
                     o = self.forward(X)
                     self.backward(X, y, o)
