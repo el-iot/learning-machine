@@ -93,12 +93,13 @@ class ConnectAI:
         """
         Serialize a line into 0's and 1's
         """
-        serialized_instance = self.flatten(
-            [convert(x) for x in instance.split(",")][:: (-1 if reverse else 1)]
+        X = self.flatten(
+                [convert(x) for x in instance.split(",")][:-1][:: (-1 if reverse else 1)]
         )
+        y = convert(instance.split(',')[-1])
         return (
-            numpy.array([serialized_instance[:-1] + [1]]),  # bias neuron
-            numpy.array([serialized_instance[-1]]),
+                numpy.array([X + [1]]),  # bias neuron
+            numpy.array([y]),
         )
 
     def sigmoid(self, s):
@@ -125,7 +126,7 @@ class ConnectAI:
         """
         Train
         """
-        reverse = True
+        reverse = False
         for epoch in range(self.epochs):
             reverse = not reverse
             with open(path, "r") as file:
@@ -134,6 +135,7 @@ class ConnectAI:
                     o = self.forward(X)
                     self.backward(X, y, o)
             print(f"{epoch}: {numpy.array(self.loss).mean()}")
+            self.loss = [] # reset the loss
 
     def save_weights(self):
         """
@@ -145,6 +147,7 @@ class ConnectAI:
 
 if __name__ == "__main__":
 
-    connect = ConnectAI("epoch_10", epochs=10)
+    EPOCHS = 20
+    connect = ConnectAI(f"epoch_{EPOCHS}", epochs=EPOCHS)
     connect.train("connect-4.data")
     connect.save_weights()
