@@ -20,13 +20,16 @@ def convert(entry):
 
 def ternary_to_binary(ternary: List, length=67):
     """
-    Converts a ternary list-representation of a number into the binary list-representation of that number
+    Converts a ternary list-representation of a number
+    into the binary list-representation of that number
     """
     if isinstance(ternary, list):
         ternary = "".join([str(_) for _ in ternary])
-    binary = bin(sum([3 ** (len(ternary) - i - 1) * int(ternary[i]) for i in range(len(ternary))]))[
-        2:
-    ]
+    binary = bin(
+        sum(
+            [3 ** (len(ternary) - i - 1) * int(ternary[i]) for i in range(len(ternary))]
+        )
+    )[2:]
     return [int(x) for x in "0" * (length - len(binary)) + binary]
 
 
@@ -43,46 +46,60 @@ class ConnectAI:
 
         self.name = name
         self.epochs = epochs
-        self.input_size = 84
-        self.hidden_size = 10
+        self.input_size = 84 + 1  # bias neuron
+        self.h0_size = 6
+        self.h1_size = 3
         self.output_size = 1
 
-        self.w1 = numpy.random.rand(self.input_size, self.hidden_size)  # 84 x 4 tensor
-        self.w2 = numpy.random.rand(self.hidden_size, self.output_size)  # 4 x 1 tensor
+        self.w1 = numpy.random.rand(self.input_size, self.h0_size)  # 84 x 4 tensor
+        self.w2 = numpy.random.rand(self.h0_size, self.h1_size)  # 4 x 1 tensor
+        self.w3 = numpy.random.rand(self.h1_size, self.output_size)  # 4 x 1 tensor
         self.loss = []
 
     def forward(self, X):
         """
         Forward Pass
         """
-        self.z = numpy.dot(X, self.w1)
-        self.z2 = self.sigmoid(self.z)
-        self.z3 = numpy.dot(self.z2, self.w2)
-        output = self.sigmoid(self.z3)
+        self.h0_input = numpy.dot(X, self.w1)
+        self.h0_output = self.sigmoid(self.h0_input)
+
+        self.h1_input = numpy.dot(self.h0_output, self.w2)
+        self.h1_output = self.sigmoid(self.h1_input)
+
+        self.output_layer_input = numpy.dot(self.h1_output, self.w3)
+        output = self.sigmoid(self.output_layer_input)  # aka output_layer_output
         return output
 
     def backward(self, X, y, output):
         """
         Back Propagate
         """
-        self.output_error = y - output  # error in output
+        self.output_error = y - output
+        self.output_delta = self.output_error * self.sigmoidPrime(output)
+
+        self.h1_error = numpy.dot(self.output_delta, self.w3.T)
+        self.h1_delta = self.h1_error * self.sigmoidPrime(self.h1_output)
+
+        self.h0_error = numpy.dot(self.h1_delta, self.w2.T)
+        self.h0_delta = self.h0_error * self.sigmoidPrime(self.h0_output)
+
+        self.w1 += numpy.dot(X.T, self.h0_delta)
+        self.w2 += numpy.dot(self.h0_output.T, self.h1_delta)
+        self.w3 += numpy.dot(self.h1_output.T, self.output_delta)
+
         self.loss += [abs(self.output_error)]
-        self.output_delta = self.output_error * self.sigmoidPrime(
-            output
-        )  # derivative of sig to error
-        self.z2_error = numpy.dot(self.output_delta, self.w2.T)
-        self.z2_delta = self.z2_error * self.sigmoidPrime(self.z2)
-        self.w1 += numpy.dot(X.T, self.z2_delta)
-        self.w2 += numpy.dot(self.z2.T, self.output_delta)
 
     def serialize(self, instance, reverse=False):
         """
         Serialize a line into 0's and 1's
         """
         serialized_instance = self.flatten(
-            [convert(x) for x in instance.split(",")][::(-1 if reverse else 1)]
+            [convert(x) for x in instance.split(",")][:: (-1 if reverse else 1)]
         )
-        return (numpy.array([serialized_instance[:-1]]), numpy.array([serialized_instance[-1]]))
+        return (
+            numpy.array([serialized_instance[:-1] + [1]]),  # bias neuron
+            numpy.array([serialized_instance[-1]]),
+        )
 
     def sigmoid(self, s):
         """
