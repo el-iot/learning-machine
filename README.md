@@ -1,6 +1,5 @@
-<h1>ConnectAI</h1>
-A simple Neural Network (NN) built from first principles, trained to play Connect-Four.
-
+<h1>Machine Learning From Scratch</h1>
+This repo containns a
 <h3>The Net</h3>
 A simple neural network was built using *numpy* package. It has 84 input neurons, 6 neurons in its first hidden layer, 3 neurons in its second hidden layer and 1 output neuron currently, though this is likely to change.
 
