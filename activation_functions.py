@@ -61,8 +61,14 @@ def linear_prime(s):
 
 
 def elu(s):
+    """
+    ELU activation function
+    """
     return numpy.where(s > 0, s, 0.01 * (numpy.exp(s) - 1))
 
 
 def elu_prime(s):
+    """
+    Derivative of the ELU activation function
+    """
     return numpy.where(s > 0, 1, 0.01 * numpy.exp(s))

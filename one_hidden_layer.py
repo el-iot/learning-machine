@@ -1,15 +1,14 @@
 #!/Users/el/myenv/bin/python
-
 """
 Test Neural Network with one hidden layer
 """
+
 import numpy
 import pandas
-from time import sleep
 
 ACTIVATION = "elu"
 DEBUG = False
-BIAS = False
+BIAS = True
 EPOCHS = 15000
 
 activation = getattr(
@@ -32,7 +31,7 @@ class NeuralNetwork:
         """
         Instantiate the model
         """
-        self.w0 = numpy.random.randn(1 + (1 if BIAS else 0), 2)
+        self.w0 = numpy.random.randn(1 + BIAS, 2)
         self.w1 = numpy.random.randn(2, 1)
         self.learning_rate = 0.0000005
 
@@ -46,15 +45,15 @@ class NeuralNetwork:
         if BIAS:
             X = numpy.append(X, 1)
 
-        self._print(f"X: {X}")
         self.h0_input = numpy.dot(X, self.w0)
-        self._print(f"h0_input: {self.h0_input}\nw0: {self.w0}")
         self.h0_output = activation(self.h0_input)
-        self._print(f"h0_output: {self.h0_output}")
-
         self.output_layer_input = numpy.dot(self.h0_output, self.w1)
-        self._print(f"output_layer_output: {self.output_layer_input}")
         self.output = activation(self.output_layer_input)
+
+        self._print(f"X: {X}")
+        self._print(f"h0_input: {self.h0_input}\nw0: {self.w0}")
+        self._print(f"h0_output: {self.h0_output}")
+        self._print(f"output_layer_output: {self.output_layer_input}")
         self._print(f"output: {self.output}")
 
     def backprop(self, X, y):
@@ -62,17 +61,18 @@ class NeuralNetwork:
         Backpropagate
         """
         output_error = y - self.output
-        self._print(f"output_error: {output_error}")
         output_delta = output_error * activation_prime(self.output_layer_input)
-        self._print(f"output_delta: {output_delta}")
 
         h0_error = numpy.dot(output_delta, self.w1.T)
-        self._print(f"h0_error: {h0_error}")
         h0_delta = h0_error * activation_prime(self.h0_input)
-        self._print(f"h0_delta: {h0_delta}")
         self.w0 += self.learning_rate * h0_delta
         self.w1 += self.learning_rate * output_delta
         self.loss += [abs(y - self.output) ** 2]
+
+        self._print(f"output_error: {output_error}")
+        self._print(f"output_delta: {output_delta}")
+        self._print(f"h0_error: {h0_error}")
+        self._print(f"h0_delta: {h0_delta}")
 
     def process(self, X, y):
         """

@@ -6,7 +6,6 @@ Neural Network with no hidden layers
 
 import numpy
 import pandas
-from time import sleep
 
 ACTIVATION = "leaky_relu"
 DEBUG = False
