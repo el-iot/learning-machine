@@ -56,7 +56,7 @@ class NeuralNetwork:
         self.backprop(y)
 
     def train(self, epochs):
-        data = pandas.read_csv("basic_data.csv", index_col="Unnamed: 0").head(100)
+        data = pandas.read_csv("../data/basic_data.csv", index_col="Unnamed: 0").head(100)
         for epoch in range(epochs):
             for _, row in data.iterrows():
                 X = numpy.array([row[-1]])
