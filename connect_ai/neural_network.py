@@ -3,9 +3,9 @@
 Numpy Implementation of a neural network
 """
 
+import json
 from typing import List
 
-import json
 import numpy
 
 
@@ -77,15 +77,15 @@ class ConnectAI:
         self.output_error = y - output
         self.output_delta = self.output_error * self.sigmoidPrime(output)
 
-        self.h1_error = numpy.dot(self.output_delta, self.w3.t)
-        self.h1_delta = self.h1_error * self.sigmoidprime(self.h1_output)
+        self.h1_error = numpy.dot(self.output_delta, self.w3.T)
+        self.h1_delta = self.h1_error * self.sigmoidPrime(self.h1_output)
 
-        self.h0_error = numpy.dot(self.h1_delta, self.w2.t)
-        self.h0_delta = self.h0_error * self.sigmoidprime(self.h0_output)
+        self.h0_error = numpy.dot(self.h1_delta, self.w2.T)
+        self.h0_delta = self.h0_error * self.sigmoidPrime(self.h0_output)
 
-        self.w1 += numpy.dot(x.t, self.h0_delta)
-        self.w2 += numpy.dot(self.h0_output.t, self.h1_delta)
-        self.w3 += numpy.dot(self.h1_output.t, self.output_delta)
+        self.w1 += numpy.dot(X.T, self.h0_delta)
+        self.w2 += numpy.dot(self.h0_output.T, self.h1_delta)
+        self.w3 += numpy.dot(self.h1_output.T, self.output_delta)
 
         self.loss += [abs(self.output_error)]
 
@@ -139,6 +139,12 @@ class ConnectAI:
         """
         with open(f"weights/{self.name}.json", "w") as file:
             json.dump({"w1": self.w1.tolist(), "w2": self.w2.tolist()}, file)
+
+    def load_weights(self):
+        """
+        Load model weights
+        """
+        pass
 
 
 if __name__ == "__main__":

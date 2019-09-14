@@ -7,7 +7,9 @@ from random import randint
 import torch
 from pandas import read_csv
 
+ROWS = 100  # how many rows from the basic dataset to use
 EPOCHS = 1000
+
 
 def sigmoid_activation(z):
     return 1 / (1 + torch.exp(-z))
@@ -68,12 +70,11 @@ class NeuralNetwork:
 if __name__ == "__main__":
 
     network = NeuralNetwork(3, 1, 1)
-    data = read_csv('basic_data.csv', index_col='Unnamed: 0').head(5)
+    data = read_csv("../../data/basic_data.csv", index_col="Unnamed: 0").head(ROWS)
     for _ in range(EPOCHS):
         for i, row in data.iterrows():
             X = torch.tensor([row[:-1]])
             y = torch.tensor(row[-1])
             network.train(X, y)
-        print(f'Loss: {sum(network.loss)/100}')
+        print(f"Loss: {sum(network.loss)/ROWS}")
         network.loss = []
-
