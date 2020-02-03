@@ -8,7 +8,7 @@ import numpy
 import pandas
 
 ACTIVATION = "leaky_relu"
-DEBUG = False
+DEBUG = True
 EPOCHS = 15000
 BIAS = True
 
@@ -21,7 +21,14 @@ numpy.random.seed(0)
 
 
 class NeuralNetwork:
+    """
+    Neural Network class
+    """
+
     def __init__(self):
+        """
+        Initialise model
+        """
         self.w0 = numpy.random.randn(1 + (1 if BIAS else 0), 1)
         self.learning_rate = 0.0000005
         self.learning_rate_depreciation = 1
@@ -29,31 +36,35 @@ class NeuralNetwork:
         self.verbose = DEBUG
 
     def forwards(self, X, y):
+        """
+        Feed-forward input data, X with target y
+        """
         X = numpy.append(X, 1) if BIAS else X
         self.output_layer_input = numpy.dot(X, self.w0)
-        self.output = activation(self.output_layer_input)
+        return activation(self.output_layer_input)
 
-    def backwards(self, y):
-        output_error = y - self.output
+    def backwards(self, yhat, y):
+        """
+        Back Propagate
+        """
+        output_error = y - yhat
         output_delta = output_error * activation_prime(self.output_layer_input)
 
         self.w0 += self.learning_rate * output_delta
-        self.loss += [abs(y - self.output) ** 2]
-
-        self._print("-" * 88)
+        self.loss += [abs(y - yhat) ** 2]
 
     def process(self, X, y):
         """
         Perform one feed-forward and backpropagation cycle
         """
-        self.forwards(X, y)
-        self.backwards(y)
+        yhat = self.forwards(X, y)
+        self.backwards(yhat, y)
 
     def train(self, epochs):
         """
         Train the model on basic_data.csv
         """
-        data = pandas.read_csv("../data/basic_data.csv", index_col="Unnamed: 0").head(100)
+        data = pandas.read_csv("../../data/basic_data.csv", index_col="Unnamed: 0").head(100)
         for epoch in range(epochs):
             for _, row in data.iterrows():
                 X = numpy.array([row[-1]])
