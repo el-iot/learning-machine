@@ -29,7 +29,7 @@ class NeuralNetwork:
         """
         Initialise model
         """
-        self.w0 = numpy.random.randn(1 + (1 if BIAS else 0), 1)
+        self.w0 = numpy.random.randn(3 + (1 if BIAS else 0), 1)
         self.learning_rate = 0.0000005
         self.learning_rate_depreciation = 1
         self.loss = []
@@ -64,10 +64,10 @@ class NeuralNetwork:
         """
         Train the model on basic_data.csv
         """
-        data = pandas.read_csv("../../data/basic_data.csv", index_col="Unnamed: 0").head(100)
+        data = pandas.read_csv("../../data/basic_data.csv", index_col="Unnamed: 0")
         for epoch in range(epochs):
             for _, row in data.iterrows():
-                X = numpy.array([row[-1]])
+                X = numpy.array(row[:-1])
                 y = numpy.array([row[-1]])
                 self.process(X, y)
             self._print(f"Loss: {sum(self.loss)/data.shape[0]}")
@@ -83,3 +83,8 @@ if __name__ == "__main__":
 
     nn = NeuralNetwork()
     nn.train(epochs=EPOCHS)
+
+
+# TODO:
+# separate run-time config into either commandline args OR a yaml file
+# add custom loss functions
