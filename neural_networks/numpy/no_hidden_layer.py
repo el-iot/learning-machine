@@ -1,4 +1,4 @@
-#!/Users/el/myenv/bin/python
+#!/usr/local/bin/python3
 
 """
 Neural Network with no hidden layers
