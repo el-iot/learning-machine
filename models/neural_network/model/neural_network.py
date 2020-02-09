@@ -10,7 +10,6 @@ import pandas
 import structlog
 
 ACTIVATION = "elu"
-DEBUG = True
 EPOCHS = 15000
 
 activation = getattr(__import__("activation_functions", fromlist=[ACTIVATION]), ACTIVATION)
@@ -47,8 +46,7 @@ class NeuralNetwork:
         self.n_layers = len(shape) - 1
         self.values = {
             level: {"input": None, "output": None} for level in range(len(shape) - 1)
-        }  # values for the feed-forward
-        self.verbose = DEBUG
+        }
 
     def forwards(self, X):
         """
@@ -91,17 +89,17 @@ class NeuralNetwork:
         """
         Train the model
         """
-        data = pandas.read_csv("../../../data/basic_data.csv", index_col="Unnamed: 0").head(100)
+        data = pandas.read_csv("../../../data/basic_data.csv", index_col="Unnamed: 0")
         for epoch in range(epochs):
             for _, row in data.iterrows():
                 X = numpy.array([row[:-1]])
                 y = numpy.array([row[-1]])
                 self.process(X, y)
-            self.logger.info(f"Total Loss: {self.loss}")
+            self.logger.info(f"Mean Loss: {self.loss/data.shape[0]}")
             self.loss = 0
 
 
 if __name__ == "__main__":
 
-    nn = NeuralNetwork([3, 2, 2, 1])
+    nn = NeuralNetwork([3, 2, 1], loss_function=abs, learning_rate=0.000005)
     nn.train(epochs=EPOCHS)
