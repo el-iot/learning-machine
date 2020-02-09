@@ -1,1 +1,1 @@
-from .neural_network import NeuralNetwork
+from .. import NeuralNetwork

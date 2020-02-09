@@ -8,6 +8,8 @@ import numpy
 import pandas
 import structlog
 
+from . import activation_functions
+
 numpy.random.seed(0)
 
 
@@ -42,14 +44,8 @@ class NeuralNetwork:
         self.n_layers = len(shape) - 1
         self.values = {level: {"input": None, "output": None} for level in range(len(shape) - 1)}
 
-        # dynamically import activation functions
-        self.activation = getattr(
-            __import__("activation_functions", fromlist=[activation]), activation
-        )
-        self.activation_prime = getattr(
-            __import__("activation_functions", fromlist=[activation + "_prime"]),
-            activation + "_prime",
-        )
+        self.activation = getattr(activation_functions, activation)
+        self.activation_prime = getattr(activation_functions, activation+'_prime')
 
     def forwards(self, X):
         """

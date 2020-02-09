@@ -8,11 +8,12 @@ from typing import List
 
 import numpy
 
+from model.neural_network import NeuralNetwork
+
 
 class ConnectThought(NeuralNetwork):
     """
     Connect-Four AI
-    Based on the Neural Network Base-class
     """
 
     def __init__(self, shape, name="connect-thought"):
@@ -76,5 +77,5 @@ class ConnectThought(NeuralNetwork):
 
 if __name__ == "__main__":
 
-    connect = ConnectThought([85, 6, 3, 1], epochs=20)
+    connect = ConnectThought([85, 6, 3, 1])
     connect.train("connect-4.data")
