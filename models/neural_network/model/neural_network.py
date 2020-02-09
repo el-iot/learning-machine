@@ -1,4 +1,3 @@
-#!/Users/el/myenv/bin/python
 """
 Test Neural Network with one hidden layer
 """
