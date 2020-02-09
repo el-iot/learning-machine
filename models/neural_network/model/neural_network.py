@@ -9,14 +9,6 @@ import numpy
 import pandas
 import structlog
 
-ACTIVATION = "elu"
-EPOCHS = 15000
-
-activation = getattr(__import__("activation_functions", fromlist=[ACTIVATION]), ACTIVATION)
-activation_prime = getattr(
-    __import__("activation_functions", fromlist=[ACTIVATION + "_prime"]), ACTIVATION + "_prime"
-)
-
 numpy.random.seed(0)
 
 
@@ -28,10 +20,11 @@ class NeuralNetwork:
     def __init__(
         self,
         shape: List[int],
+        activation='elu',
+        has_bias=False,
         learning_rate: float = 10e-6,
         loss_function=lambda x: x ** 2,
         name="learning-machine",
-        has_bias=False,
     ):
         """
         Instantiate the model
@@ -50,6 +43,15 @@ class NeuralNetwork:
         self.n_layers = len(shape) - 1
         self.values = {level: {"input": None, "output": None} for level in range(len(shape) - 1)}
 
+        # dynamically import activation functions
+        self.activation = getattr(
+            __import__("activation_functions", fromlist=[activation]), activation
+        )
+        self.activation_prime = getattr(
+            __import__("activation_functions", fromlist=[activation + "_prime"]),
+            activation + "_prime",
+        )
+
     def forwards(self, X):
         """
         Feed the data forward
@@ -61,7 +63,7 @@ class NeuralNetwork:
 
         for layer_idx in range(self.n_layers):
             layer_input = numpy.dot(_in, self.weights[layer_idx])
-            layer_output = activation(layer_input)
+            layer_output = self.activation(layer_input)
 
             self.values[layer_idx]["input"] = layer_input
             self.values[layer_idx]["output"] = _in = layer_output
@@ -79,11 +81,14 @@ class NeuralNetwork:
             else:
                 error = numpy.dot(self.deltas[layer_idx + 1], self.weights[layer_idx + 1].T)
 
-            delta = error * activation_prime(self.values[layer_idx]["input"])
+            delta = error * self.activation_prime(self.values[layer_idx]["input"])
             self.weights[layer_idx] += self.learning_rate * delta
             self.deltas[layer_idx] = delta
 
     def scalar(self, value):
+        """
+        Convert to a scalar
+        """
         if isinstance(value, (int, float)):
             return value
         return self.scalar(value[0])
@@ -95,21 +100,36 @@ class NeuralNetwork:
         self.forwards(X)
         self.backwards(X, y)
 
-    def train(self, epochs):
+    def train(self, data_path, converge=True, epochs=100):
         """
         Train the model
         """
-        data = pandas.read_csv("../../../data/basic_data.csv", index_col="Unnamed: 0")
-        for epoch in range(epochs):
+        data = pandas.read_csv(data_path)
+        epoch = 0
+        trained = False
+
+        while not trained:
+
+            if not converge and epoch > epochs:
+                self.logger.info(f"Finished {epochs} epochs")
+                trained = True
+                continue
+
             for _, row in data.iterrows():
                 X = numpy.array([row[:-1]])
                 y = numpy.array([row[-1]])
                 self.process(X, y)
-            self.logger.info(f"Mean Loss: {self.loss/data.shape[0]}")
-            self.loss = 0
 
+            mean_loss = self.loss / data.shape[0]
 
-if __name__ == "__main__":
+            if (
+                self.previous_loss is not None
+                and self.loss - self.previous_loss < self.convergence_tolerance
+            ):
+                self.logger.info("Converged")
+                trained = True
+                continue
 
-    nn = NeuralNetwork([3, 2, 1], has_bias=True, loss_function=abs, learning_rate=0.000005)
-    nn.train(epochs=EPOCHS)
+            epoch += 1
+            self.logger.info(f"Mean Loss: {mean_loss}")
+            self.previous_loss, self.loss = mean_loss, 0

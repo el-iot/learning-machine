@@ -15,7 +15,7 @@ class ConnectThought(NeuralNetwork):
     Based on the Neural Network Base-class
     """
 
-    def __init__(self, shape, name='connect-thought'):
+    def __init__(self, shape, name="connect-thought"):
         """
         Initialise the model
         """
@@ -46,7 +46,9 @@ class ConnectThought(NeuralNetwork):
         """
         Serialize a line into 0's and 1's
         """
-        X = self.flatten([self.convert(x) for x in instance.split(",")][:-1][:: (-1 if reverse else 1)])
+        X = self.flatten(
+            [self.convert(x) for x in instance.split(",")][:-1][:: (-1 if reverse else 1)]
+        )
         y = self.convert(instance.split(",")[-1])
         return (numpy.array([X + [1]]), numpy.array([y]))  # bias neuron
 
