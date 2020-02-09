@@ -9,19 +9,18 @@ from typing import List
 import numpy
 
 
-class ConnectAI(NeuralNetwork):
+class ConnectThought(NeuralNetwork):
     """
     Connect-Four AI
-    Uses a sigmoid activation function
+    Based on the Neural Network Base-class
     """
 
-    def __init__(self, shape, name, epochs=20):
+    def __init__(self, shape, name='connect-thought'):
         """
         Initialise the model
         """
 
         super().__init__(shape, name=name)
-        # shape 85, 6, 3, 1
 
     def convert(self, entry):
         """
@@ -47,21 +46,9 @@ class ConnectAI(NeuralNetwork):
         """
         Serialize a line into 0's and 1's
         """
-        X = self.flatten([convert(x) for x in instance.split(",")][:-1][:: (-1 if reverse else 1)])
-        y = convert(instance.split(",")[-1])
+        X = self.flatten([self.convert(x) for x in instance.split(",")][:-1][:: (-1 if reverse else 1)])
+        y = self.convert(instance.split(",")[-1])
         return (numpy.array([X + [1]]), numpy.array([y]))  # bias neuron
-
-    def sigmoid(self, s):
-        """
-        Sigmoid Activation Function
-        """
-        return 1 / (1 + numpy.exp(-s))
-
-    def sigmoidPrime(self, s):
-        """
-        Derivative of the sigmoid activation function
-        """
-        return s * (1 - s)
 
     def flatten(self, x):
         """
@@ -70,20 +57,6 @@ class ConnectAI(NeuralNetwork):
         if not isinstance(x, list):
             return [x]
         return [w for v in x for w in self.flatten(v)]
-
-    def train(self, path):
-        """
-        Train
-        """
-        reverse = False
-        for epoch in range(self.epochs):
-            with open(path, "r") as file:
-                for line in file.readlines():
-                    X, y = self.serialize(line, reverse=reverse)
-                    o = self.forward(X)
-                    self.backward(X, y, o)
-            print(f"{epoch}: {numpy.array(self.loss).mean()}")
-            self.loss = []  # reset the loss
 
     def save_weights(self):
         """
@@ -96,12 +69,10 @@ class ConnectAI(NeuralNetwork):
         """
         Load model weights
         """
-        pass
+        raise NotImplementedError()
 
 
 if __name__ == "__main__":
 
-    EPOCHS = 20
-    connect = ConnectAI(f"epoch_{EPOCHS}", epochs=EPOCHS)
+    connect = ConnectThought([85, 6, 3, 1], epochs=20)
     connect.train("connect-4.data")
-    connect.save_weights()
