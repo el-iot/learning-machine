@@ -3,20 +3,19 @@
 Test Neural Network with one hidden layer
 """
 
+from typing import List
+
 import numpy
 import pandas
+import structlog
 
 ACTIVATION = "elu"
-DEBUG = False
-BIAS = True
+DEBUG = True
 EPOCHS = 15000
 
-activation = getattr(
-    __import__("activation_functions", fromlist=[ACTIVATION]), ACTIVATION
-)
+activation = getattr(__import__("activation_functions", fromlist=[ACTIVATION]), ACTIVATION)
 activation_prime = getattr(
-    __import__("activation_functions", fromlist=[ACTIVATION + "_prime"]),
-    ACTIVATION + "_prime",
+    __import__("activation_functions", fromlist=[ACTIVATION + "_prime"]), ACTIVATION + "_prime"
 )
 
 numpy.random.seed(0)
@@ -24,85 +23,85 @@ numpy.random.seed(0)
 
 class NeuralNetwork:
     """
-    A neural network with one hidden layer
+    A neural network with an arbitrary number of hidden layers
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        shape: List[int],
+        learning_rate: float = 10e-6,
+        loss_function=lambda x: x ** 2,
+        name="learning-machine",
+    ):
         """
         Instantiate the model
         """
-        self.w0 = numpy.random.randn(1 + BIAS, 2)
-        self.w1 = numpy.random.randn(2, 1)
-        self.learning_rate = 0.0000005
-
-        self.loss = []
+        self.weights = {
+            idx: numpy.random.randn(shape[idx], shape[idx + 1]) for idx in range(len(shape) - 1)
+        }
+        self.deltas = {}
+        self.learning_rate = learning_rate
+        self.logger = structlog.get_logger(name)
+        self.loss = 0
+        self.loss_function = loss_function
+        self.n_layers = len(shape) - 1
+        self.values = {
+            level: {"input": None, "output": None} for level in range(len(shape) - 1)
+        }  # values for the feed-forward
         self.verbose = DEBUG
 
-    def feedforward(self, X):
+    def forwards(self, X):
         """
         Feed the data forward
         """
-        if BIAS:
-            X = numpy.append(X, 1)
+        _in = X
 
-        self.h0_input = numpy.dot(X, self.w0)
-        self.h0_output = activation(self.h0_input)
-        self.output_layer_input = numpy.dot(self.h0_output, self.w1)
-        self.output = activation(self.output_layer_input)
+        for layer_idx in range(self.n_layers):
+            layer_input = numpy.dot(_in, self.weights[layer_idx])
+            layer_output = activation(layer_input)
 
-        self._print(f"X: {X}")
-        self._print(f"h0_input: {self.h0_input}\nw0: {self.w0}")
-        self._print(f"h0_output: {self.h0_output}")
-        self._print(f"output_layer_output: {self.output_layer_input}")
-        self._print(f"output: {self.output}")
+            self.values[layer_idx]["input"] = layer_input
+            self.values[layer_idx]["output"] = _in = layer_output
 
-    def backprop(self, X, y):
+    def backwards(self, X, y):
         """
         Backpropagate
         """
-        output_error = y - self.output
-        output_delta = output_error * activation_prime(self.output_layer_input)
+        _out = y
+        for layer_idx in [*range(self.n_layers)][::-1]:
 
-        h0_error = numpy.dot(output_delta, self.w1.T)
-        h0_delta = h0_error * activation_prime(self.h0_input)
-        self.w0 += self.learning_rate * h0_delta
-        self.w1 += self.learning_rate * output_delta
-        self.loss += [abs(y - self.output) ** 2]
+            if layer_idx == self.n_layers - 1:
+                error = _out - self.values[layer_idx]["output"]
+                self.loss += self.loss_function(error[0][0])
+            else:
+                error = numpy.dot(self.deltas[layer_idx + 1], self.weights[layer_idx + 1].T)
 
-        self._print(f"output_error: {output_error}")
-        self._print(f"output_delta: {output_delta}")
-        self._print(f"h0_error: {h0_error}")
-        self._print(f"h0_delta: {h0_delta}")
+            delta = error * activation_prime(self.values[layer_idx]["input"])
+            self.weights[layer_idx] += self.learning_rate * delta
+            self.deltas[layer_idx] = delta
 
     def process(self, X, y):
         """
         Feed forward and backpropagate the data
         """
-        self.feedforward(X)
-        self.backprop(X, y)
+        self.forwards(X)
+        self.backwards(X, y)
 
     def train(self, epochs):
         """
         Train the model
         """
-        data = pandas.read_csv("basic_data.csv", index_col="Unnamed: 0").head(100)
+        data = pandas.read_csv("../../../data/basic_data.csv", index_col="Unnamed: 0").head(100)
         for epoch in range(epochs):
             for _, row in data.iterrows():
-                X = numpy.array([[row[-1]]])
-                y = numpy.array([row[-1] + 1])
+                X = numpy.array([row[:-1]])
+                y = numpy.array([row[-1]])
                 self.process(X, y)
-            print(f"Total Loss: {sum(self.loss)}")
-            self.loss = []
-
-    def _print(self, s):
-        """
-        Print if verbose
-        """
-        if self.verbose:
-            print(s)
+            self.logger.info(f"Total Loss: {self.loss}")
+            self.loss = 0
 
 
 if __name__ == "__main__":
 
-    nn = NeuralNetwork()
+    nn = NeuralNetwork([3, 2, 2, 1])
     nn.train(epochs=EPOCHS)
