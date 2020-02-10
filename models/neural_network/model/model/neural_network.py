@@ -21,10 +21,11 @@ class NeuralNetwork:
     def __init__(
         self,
         shape: List[int],
-        activation='elu',
+        activation="elu",
         has_bias=False,
         learning_rate: float = 10e-6,
         loss_function=lambda x: x ** 2,
+        convergence_tolerance=0.995,
         name="learning-machine",
     ):
         """
@@ -40,12 +41,14 @@ class NeuralNetwork:
         self.learning_rate = learning_rate
         self.logger = structlog.get_logger(name)
         self.loss = 0
+        self.previous_loss = None
         self.loss_function = loss_function
         self.n_layers = len(shape) - 1
         self.values = {level: {"input": None, "output": None} for level in range(len(shape) - 1)}
 
+        self.convergence_tolerance = convergence_tolerance
         self.activation = getattr(activation_functions, activation)
-        self.activation_prime = getattr(activation_functions, activation+'_prime')
+        self.activation_prime = getattr(activation_functions, activation + "_prime")
 
     def forwards(self, X):
         """
@@ -116,15 +119,16 @@ class NeuralNetwork:
                 self.process(X, y)
 
             mean_loss = self.loss / data.shape[0]
+            self.logger.info(f"Mean Loss: {mean_loss}")
 
             if (
-                self.previous_loss is not None
-                and self.loss - self.previous_loss < self.convergence_tolerance
+                False
+                and self.previous_loss is not None
+                and self.loss / self.previous_loss > self.convergence_tolerance
             ):
                 self.logger.info("Converged")
                 trained = True
                 continue
 
             epoch += 1
-            self.logger.info(f"Mean Loss: {mean_loss}")
             self.previous_loss, self.loss = mean_loss, 0
