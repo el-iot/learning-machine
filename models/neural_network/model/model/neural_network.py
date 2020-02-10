@@ -32,7 +32,9 @@ class NeuralNetwork:
         Instantiate the model
         """
         self.weights = {
-            idx: numpy.random.randn(shape[idx] + (has_bias if idx == 0 else 0), shape[idx + 1])
+            idx: numpy.random.randn(
+                shape[idx] + (has_bias if idx == 0 else 0), shape[idx + 1]
+            )
             for idx in range(len(shape) - 1)
         }
 
@@ -44,7 +46,9 @@ class NeuralNetwork:
         self.previous_loss = None
         self.loss_function = loss_function
         self.n_layers = len(shape) - 1
-        self.values = {level: {"input": None, "output": None} for level in range(len(shape) - 1)}
+        self.values = {
+            level: {"input": None, "output": None} for level in range(len(shape) - 1)
+        }
 
         self.convergence_tolerance = convergence_tolerance
         self.activation = getattr(activation_functions, activation)
@@ -77,7 +81,9 @@ class NeuralNetwork:
                 error = _out - self.values[layer_idx]["output"]
                 self.loss += self.loss_function(self.scalar(error))
             else:
-                error = numpy.dot(self.deltas[layer_idx + 1], self.weights[layer_idx + 1].T)
+                error = numpy.dot(
+                    self.deltas[layer_idx + 1], self.weights[layer_idx + 1].T
+                )
 
             delta = error * self.activation_prime(self.values[layer_idx]["input"])
             self.weights[layer_idx] += self.learning_rate * delta
